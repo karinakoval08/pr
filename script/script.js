@@ -139,16 +139,22 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
         const updateButtonsVisibility = () => {
-            if (numberQuestion === 0) {
-                prevButton.style.display = 'none';
-            } else {
-                prevButton.style.display = 'inline-block';
+            switch (numberQuestion) {
+                case 0:
+                    prevButton.style.display = 'none';
+                    break;
+                default:
+                    prevButton.style.display = 'inline-block';
+                    break;
             }
         
-            if (numberQuestion === questions.length - 1) {
-                nextButton.style.display = 'none';
-            } else {
-                nextButton.style.display = 'inline-block';
+            switch (numberQuestion) {
+                case questions.length - 1:
+                    nextButton.style.display = 'none';
+                    break;
+                default:
+                    nextButton.style.display = 'inline-block';
+                    break;
             }
         };
         
@@ -157,16 +163,18 @@ document.addEventListener('DOMContentLoaded', function() {
             renderAnswers(indexQuestion);
         };
 
-nextButton.onclick = () => {
-    numberQuestion++;
-    renderQuestions(numberQuestion);
-    updateButtonsVisibility();
-};
+        updateButtonsVisibility();
 
-prevButton.onclick = () => {
-    numberQuestion--;
-    renderQuestions(numberQuestion);
-    updateButtonsVisibility();
-};
+        nextButton.onclick = () => {
+            numberQuestion++;
+            renderQuestions(numberQuestion);
+            updateButtonsVisibility();
+        };
+        
+        prevButton.onclick = () => {
+            numberQuestion--;
+            renderQuestions(numberQuestion);
+            updateButtonsVisibility();
+        };
     }
 })
