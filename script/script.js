@@ -1,180 +1,168 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function(){
     const btnOpenModal = document.querySelector('#btnOpenModal');
     const modalBlock = document.querySelector('#modalBlock');
     const closeModal = document.querySelector('#closeModal');
+    const questionTitle = document.querySelector('#question');
     const formAnswers = document.querySelector('#formAnswers');
     const nextButton = document.querySelector('#next');
     const prevButton = document.querySelector('#prev');
+    const sendButtton = document.querySelector('#send');
 
-    const questionTitle = document.querySelector('#question');
+ 
+    const getDataFromFirebase = () => {
+        axios.get('https://testburger-f083b-default-rtdb.europe-west1.firebasedatabase.app/questions.json')
+            .then(response => {
+                
+                console.log('Ответ от Firebase Database:', response.data);
+                const questionsFromFirebase = response.data; 
 
-    const questions = [
-        {
-            question: 'Какого цвета бургер вы хотите?',
-            answers: [
-                {
-                    title: 'Стандарт',
-                    url: './image/burger.png'
-                },
-                {
-                    title: 'Черный',
-                    url: './image/burgerBlack.png'
-                }
-            ]
-        },
-        {
-            question: 'Какого цвета бургер вы хотите?',
-            answers: [
-                {
-                    title: 'Стандарт1',
-                    url: './image/burger.png'
-                },
-                {
-                    title: 'Черный1',
-                    url: './image/burgerBlack.png'
-                }
-            ]  
-        },
-        {
-            question: 'Какого цвета бургер вы хотите?',
-            answers: [
-                {
-                    title: 'Стандарт2',
-                    url: './image/burger.png'
-                },
-                {
-                    title: 'Черный2',
-                    url: './image/burgerBlack.png'
-                }
-            ]  
-        },
-        {
-            question: "Из какого мяса котлета?",
-            answers: [
-                {
-                    title: 'Курица',
-                    url: './image/chickenMeat.png'
-                },
-                {
-                    title: 'Говядина',
-                    url: './image/beefMeat.png'
-                },
-                {
-                    title: 'Свинина',
-                    url: './image/porkMeat.png'
-                }
-            ],
-            type: 'radio'
-        },
-        {
-        question: "Дополнительные ингредиенты?",
-        answers: [
-            {
-                title: 'Помидор',
-                url: './image/tomato.png'
-            },
-            {
-                title: 'Огурец',
-                url: './image/cucumber.png'
-            },
-            {
-                title: 'Салат',
-                url: './image/salad.png'
-            },
-            {
-                title: 'Лук',
-                url: './image/onion.png'
-            }
-        ],
-        type: 'checkbox'
-    },
-    {
-        question: "Добавить соус?",
-        answers: [
-            {
-                title: 'Чесночный',
-                url: './image/sauce1.png'
-            },
-            {
-                title: 'Томатный',
-                url: './image/sauce2.png'
-            },
-            {
-                title: 'Горчичный',
-                url: './image/sauce3.png'
-            }
-        ],
-        type: 'radio'
-    },
-    ];
-    
+                
+                playTest(questionsFromFirebase);
+            })
+            .catch(error => {
+                console.error('Ошибка при запросе к Firebase Database:', error);
+            });
+    }
+
+
+
+
     btnOpenModal.addEventListener('click', () => {
         modalBlock.classList.add('d-block');
-        playTest();
+        getDataFromFirebase();
     })
 
     closeModal.addEventListener('click', () => {
         modalBlock.classList.remove('d-block');
     })
 
-    const playTest = () => {
+    const playTest = (questions) => {
+
+        const finalAnswers = [];
+
         let numberQuestion = 0;
 
         const renderAnswers = (index) => {
-            // Очищення попередніх відповідей
-            formAnswers.innerHTML = '';
-        
             questions[index].answers.forEach((answer) => {
                 const answerItem = document.createElement('div');
-                answerItem.classList.add('answers-item', 'd-flex', 'flex-column');
-        
+                answerItem.classList.add('answers-item', 'd-flex', 'justify-content-center');
+
                 answerItem.innerHTML = `
-                    <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none">
+                    <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none" value="${answer.title}">
                     <label for="${answer.title}" class="d-flex flex-column justify-content-between">
                         <img class="answerImg" src="${answer.url}" alt="burger">
                         <span>${answer.title}</span>
                     </label>
                 `;
+
                 formAnswers.appendChild(answerItem);
-            });
-        };
-        const updateButtonsVisibility = () => {
-            switch (numberQuestion) {
-                case 0:
-                    prevButton.style.display = 'none';
-                    break;
-                default:
-                    prevButton.style.display = 'inline-block';
-                    break;
+            })
+
+            sendButtton.onclick = () => {
+                checkAnswer();
+    
+                
+                const phoneNumber = document.querySelector('#numberPhone').value;
+    
+                
+                axios.post('https://testburger-f083b-default-rtdb.europe-west1.firebasedatabase.app/phoneNumbers.json', {
+                    phoneNumber: phoneNumber
+                })
+                .then(response => {
+                    console.log('Номер телефона успешно отправлен в базу данных Firebase:', response.data);
+                })
+                .catch(error => {
+                    console.error('Ошибка при отправке номера телефона в Firebase Database:', error);
+                });
+    
+                numberQuestion++;
+                renderQuestion(numberQuestion);
+                console.log(finalAnswers);
             }
-        
-            switch (numberQuestion) {
-                case questions.length - 1:
-                    nextButton.style.display = 'none';
-                    break;
-                default:
-                    nextButton.style.display = 'inline-block';
-                    break;
-            }
-        };
-        
-        const renderQuestions = (indexQuestion) => {
-            questionTitle.textContent = questions[indexQuestion].question;
-            renderAnswers(indexQuestion);
         };
 
-        updateButtonsVisibility();
+        const renderQuestion = (indexQuestion) => {
+            formAnswers.innerHTML = '';
+        
+            switch (true) {
+                case (numberQuestion >= 0 && numberQuestion <= questions.length - 1):
+                    questionTitle.textContent = questions[indexQuestion].question;
+                    renderAnswers(indexQuestion);
+        
+                    nextButton.classList.remove('d-none');
+                    prevButton.classList.remove('d-none');
+                    sendButtton.classList.add('d-none');
+                    break;
+                
+                case (numberQuestion === 0):
+                    prevButton.classList.add('d-none');
+                    break;
+                
+                case (numberQuestion === questions.length):
+                    nextButton.classList.add('d-none');
+                    prevButton.classList.add('d-none');
+                    sendButtton.classList.remove('d-none');
+                    formAnswers.innerHTML = `
+                        <div class="form-group">
+                            <label for="numberPhone">Enter your number</label>
+                            <input type="phone" class="form-control" id="numberPhone">
+                        </div>
+                    `;
+                    break;
+                
+                case (numberQuestion === questions.length + 1):
+                    formAnswers.textContent = 'Спасибо за пройденный тест!';
+                    setTimeout(() => {
+                        modalBlock.classList.remove('d-block');
+                    }, 2000);
+                    break;
+                
+                default:
+                    break;
+            }
+        };
+        
+
+        renderQuestion(numberQuestion);
+
+        const checkAnswer = () => {
+            
+            const obj = {};
+
+            const inputs = [...formAnswers.elements].filter((input) => input.checked || input.id === 'numberPhone');
+
+           
+
+            inputs.forEach((input, index) => {
+                if(numberQuestion >= 0 && numberQuestion <= questions.length - 1){
+                    obj[`${index}_${questions[numberQuestion].question}`] = input.value;
+                }
+
+                if(numberQuestion === questions.length) {
+                    obj['Номер телефона'] = input.value;
+                }
+            })
+ 
+            finalAnswers.push(obj);
+            
+        }
 
         nextButton.onclick = () => {
+            checkAnswer();
+
             numberQuestion++;
-            renderQuestions(numberQuestion);
-            updateButtonsVisibility();
-        };
-        
+            renderQuestion(numberQuestion);
+        }
         prevButton.onclick = () => {
             numberQuestion--;
-            renderQuestions(numberQuestion);
-            updateButtonsVisibility();
-        };
-    }
-})
+            renderQuestion(numberQuestion);
+        }
+
+        sendButtton.onclick = () => {
+            checkAnswer();
+            numberQuestion++;
+            renderQuestion(numberQuestion);
+            console.log(finalAnswers);
+        }
+    };
+});
